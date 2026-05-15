@@ -17,7 +17,9 @@ export function Step3Summary() {
   const [exportingPDF, setExportingPDF] = useState(false)
   const [selectedAgencies, setSelectedAgencies] = useState<Set<string>>(new Set(agencies.map(a => a.id)))
 
-  const { summary, equipmentCost, agencyCount } = calculateTotalCost(agencies, prices)
+  const agenciesInQuote = agencies.filter((a) => selectedAgencies.has(a.id))
+  const { summary } = calculateTotalCost(agenciesInQuote, prices)
+  const agencyCount = agencies.length
 
   const getAgencyCost = (agencyId: string) => {
     const agency = agencies.find(a => a.id === agencyId)
@@ -57,9 +59,10 @@ export function Step3Summary() {
   }
 
   const handleExportPDF = async () => {
+    if (agenciesInQuote.length === 0) return
     setExportingPDF(true)
     try {
-      await generateQuotePDF(agencies, prices, paymentTerms)
+      await generateQuotePDF(agenciesInQuote, prices, paymentTerms)
     } finally {
       setExportingPDF(false)
     }
@@ -82,20 +85,15 @@ export function Step3Summary() {
           <CardContent className="space-y-4">
             {agencies.map((agency) => (
               <div key={agency.id} className="rounded-lg border p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3 flex-1">
+                <div className="flex items-center gap-3 flex-1 min-w-0 mb-2">
                     <input
                       type="checkbox"
                       checked={selectedAgencies.has(agency.id)}
                       onChange={() => toggleAgency(agency.id)}
-                      className="w-4 h-4 cursor-pointer"
+                      className="w-4 h-4 shrink-0 cursor-pointer"
                     />
-                    <h4 className="font-semibold text-slate-900">{agency.name}</h4>
+                    <h4 className="font-semibold text-slate-900 truncate">{agency.name}</h4>
                   </div>
-                  <span className="font-semibold text-blue-600">
-                    ${getAgencyCost(agency.id).toLocaleString()}
-                  </span>
-                </div>
                 <p className="text-sm text-slate-600 ml-7">
                   {agency.environments.length}{" "}
                   {agency.environments.length === 1 ? "ambiente" : "ambientes"}
@@ -221,7 +219,7 @@ export function Step3Summary() {
           </Button>
           <Button
             onClick={handleExportPDF}
-            disabled={exportingPDF}
+            disabled={exportingPDF || agenciesInQuote.length === 0}
             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-70"
           >
             {exportingPDF ? (

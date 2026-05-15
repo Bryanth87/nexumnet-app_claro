@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { useQuote } from "@/components/quote-context"
-import { usePrices } from "@/components/prices-context"
 import { useState } from "react"
 import { getSplitterType } from "@/lib/quote-types"
 import { cn } from "@/lib/utils"
@@ -138,7 +137,6 @@ function EnvironmentCard({
   updateEnvironment,
   updateContentGroupScreens,
 }: EnvironmentCardProps) {
-  const { prices } = usePrices()
   const screenOptions = [1, 2, 3, 4, 5, 6, 7]
   const mediaPlayerOptions = [1, 2, 3, 4]
 
@@ -150,9 +148,9 @@ function EnvironmentCard({
   const getSplitterLabel = (screenCount: number): string => {
     const splitter = getSplitterType(screenCount)
     if (!splitter) return ""
-    if (splitter.type === "1x2") return `Splitter 1x2 ($${prices.SPLITTER_1X2})`
-    if (splitter.type === "1x4") return `Splitter 1x4 ($${prices.SPLITTER_1X4})`
-    return `Splitter 1x8 ($${prices.SPLITTER_1X8})`
+    if (splitter.type === "1x2") return "Splitter 1×2"
+    if (splitter.type === "1x4") return "Splitter 1×4"
+    return "Splitter 1×8"
   }
 
   return (
@@ -226,7 +224,7 @@ function EnvironmentCard({
             Grupos de Contenido Independiente (Media Players)
           </label>
           <p className="mb-2 text-xs text-slate-500">
-            Cada grupo reproduce contenido diferente y requiere 1 Media Player (${prices.MEDIA_PLAYER} c/u)
+            Cada grupo reproduce contenido diferente y requiere 1 Media Player
           </p>
           <div className="flex gap-2">
             {mediaPlayerOptions.map((num) => (
