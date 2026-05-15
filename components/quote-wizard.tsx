@@ -8,7 +8,6 @@ import { StepIndicator } from "@/components/step-indicator"
 import { Step1Agencies } from "@/components/step1-agencies"
 import { Step2Environments } from "@/components/step2-environments"
 import { Step3Summary } from "@/components/step3-summary"
-import { EquipmentSidebar } from "@/components/equipment-sidebar"
 
 const STEPS = [
   { number: 1, title: "Agencias" },
@@ -65,13 +64,8 @@ function QuoteWizardContent() {
       {/* Contenido Principal */}
       <main className="mx-auto max-w-7xl px-4 py-8">
         {currentStep === 2 ? (
-          <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
-            <div>
-              <Step2Environments />
-            </div>
-            <div className="hidden lg:block">
-              <EquipmentSidebar />
-            </div>
+          <div>
+            <Step2Environments />
           </div>
         ) : (
           <div>
