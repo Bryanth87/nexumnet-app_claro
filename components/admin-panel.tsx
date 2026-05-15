@@ -78,6 +78,7 @@ function getTokenFromCookie(): string {
 export function AdminPanel() {
   const { prices, updateAllPrices, resetPrices, refreshPrices } = usePrices()
   const [draft, setDraft] = useState<EquipmentPrices>(() => ({ ...DEFAULT_PRICES, ...prices }))
+  const [rawValues, setRawValues] = useState<Partial<Record<keyof EquipmentPrices, string>>>({})
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -85,17 +86,35 @@ export function AdminPanel() {
   // Sincronizar draft cuando cargan los precios del servidor
   useEffect(() => {
     setDraft({ ...DEFAULT_PRICES, ...prices })
+    setRawValues({})
   }, [prices])
 
   const handleChange = (key: keyof EquipmentPrices, raw: string) => {
+    // Guardar el texto crudo mientras el usuario escribe (permite borrar el campo)
+    setRawValues((prev) => ({ ...prev, [key]: raw }))
+
     const value = parseFloat(raw)
     if (!isNaN(value) && value >= 0) {
       const clamped = Math.min(value, 99_999)
       const rounded = Math.round(clamped * 100) / 100
       setDraft((prev) => ({ ...prev, [key]: rounded }))
-    } else if (raw === "" || raw === "-") {
-      setDraft((prev) => ({ ...prev, [key]: 0 }))
     }
+  }
+
+  const handleBlur = (key: keyof EquipmentPrices) => {
+    // Al salir del campo, limpiar el raw y asegurar que draft tenga un número válido
+    setRawValues((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setDraft((prev) => {
+      const current = prev[key]
+      if (isNaN(current as number) || (current as number) < 0) {
+        return { ...prev, [key]: 0 }
+      }
+      return prev
+    })
   }
 
   const handleSave = async () => {
@@ -233,8 +252,9 @@ export function AdminPanel() {
                               min={0}
                               max={99999}
                               step={0.01}
-                              value={draft[row.key]}
+                              value={rawValues[row.key] !== undefined ? rawValues[row.key] : draft[row.key]}
                               onChange={(e) => handleChange(row.key, e.target.value)}
+                              onBlur={() => handleBlur(row.key)}
                               className="w-28 text-right font-mono"
                               disabled={saving}
                             />

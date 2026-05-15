@@ -12,6 +12,8 @@ const VALID_KEYS: (keyof EquipmentPrices)[] = [
   "SPLITTER_1X8",
   "HDMI_CABLE",
   "MONTHLY_MAINTENANCE_PER_AGENCY",
+  "MEDIA_PLAYER_LICENSE",
+  "BANKING_COMMISSION_RATE",
 ]
 
 export async function OPTIONS(request: NextRequest) {
