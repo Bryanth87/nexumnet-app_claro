@@ -66,7 +66,7 @@ export function Step3Summary() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
       {/* Columna Izquierda - Detalles del Resumen */}
       <div className="space-y-6">
         <Card>

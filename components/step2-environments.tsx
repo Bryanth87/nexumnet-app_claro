@@ -47,15 +47,15 @@ export function Step2Environments() {
   const envCount = currentAgency.environments.length
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <span className="text-slate-600">Agencia {currentAgencyIndex + 1} de {agencies.length}:</span>
+          <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 text-lg">
+            <span className="text-slate-600 text-sm sm:text-base">Agencia {currentAgencyIndex + 1} de {agencies.length}:</span>
             <Input
               value={currentAgency.name}
               onChange={(e) => updateAgencyName(currentAgency.id, e.target.value)}
-              className="max-w-xs text-lg font-semibold"
+              className="max-w-xs text-lg font-semibold w-full sm:w-auto"
             />
           </CardTitle>
         </CardHeader>

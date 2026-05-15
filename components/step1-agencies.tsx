@@ -17,7 +17,7 @@ export function Step1Agencies() {
   }
 
   return (
-    <div className="flex min-h-[400px] items-center justify-center">
+    <div className="flex min-h-[400px] items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">

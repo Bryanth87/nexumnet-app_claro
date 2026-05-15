@@ -22,7 +22,7 @@ function QuoteWizardContent() {
     <div className="min-h-screen bg-slate-100">
       {/* Header */}
       <header className="border-b bg-white shadow-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           {/* Logo Empresa (Nexumnet) */}
           <div className="flex flex-col items-center gap-1">
             <Image
@@ -62,7 +62,7 @@ function QuoteWizardContent() {
       </header>
 
       {/* Contenido Principal */}
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      <main className="mx-auto max-w-6xl px-4 py-8">
         {currentStep === 2 ? (
           <div>
             <Step2Environments />
@@ -76,8 +76,8 @@ function QuoteWizardContent() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-white py-4 text-center text-sm text-slate-500">
-        <div className="flex items-center justify-center gap-4">
+      <footer className="border-t bg-white py-4 text-center text-xs sm:text-sm text-slate-500">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 px-4">
           <span>Herramienta de Cotización Multimedia &copy; {new Date().getFullYear()}</span>
           <Link
             href="/admin"
