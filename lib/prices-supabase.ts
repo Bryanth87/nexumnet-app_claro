@@ -14,7 +14,7 @@ export const DEFAULT_PRICES: EquipmentPrices = {
 export async function loadPricesFromServer(): Promise<EquipmentPrices> {
   try {
     const res = await fetch("/api/prices", {
-      next: { revalidate: 60 },
+      cache: "no-store",
     })
 
     if (!res.ok) throw new Error("Failed to fetch prices")

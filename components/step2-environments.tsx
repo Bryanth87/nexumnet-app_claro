@@ -200,16 +200,17 @@ function EnvironmentCard({
               </Button>
             ))}
             <Button
-              variant={environment.screenCount > 7 ? "default" : "outline"}
+              variant={environment.screenCount === 8 ? "default" : "outline"}
               size="sm"
               onClick={() =>
                 updateEnvironment(agencyId, environment.id, { screenCount: 8 })
               }
               className={cn(
-                environment.screenCount > 7 && "bg-blue-600 hover:bg-blue-700 text-white"
+                "w-10",
+                environment.screenCount === 8 && "bg-blue-600 hover:bg-blue-700 text-white"
               )}
             >
-              8+
+              8
             </Button>
           </div>
           <div className="mt-3 flex flex-wrap gap-1">

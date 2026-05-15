@@ -76,7 +76,7 @@ function getTokenFromCookie(): string {
 }
 
 export function AdminPanel() {
-  const { prices, updateAllPrices, resetPrices, refreshPrices } = usePrices()
+  const { prices, updateAllPrices, resetPrices } = usePrices()
   const [draft, setDraft] = useState<EquipmentPrices>(() => ({ ...DEFAULT_PRICES, ...prices }))
   const [rawValues, setRawValues] = useState<Partial<Record<keyof EquipmentPrices, string>>>({})
   const [saved, setSaved] = useState(false)
@@ -132,7 +132,6 @@ export function AdminPanel() {
 
     if (result.success) {
       updateAllPrices(draft)
-      await refreshPrices()
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } else {

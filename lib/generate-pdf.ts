@@ -1,6 +1,6 @@
 import type { Agency } from "@/lib/quote-types"
 import type { EquipmentPrices } from "@/lib/prices-storage"
-import { calculateTotalCost, getSplitterType } from "@/lib/quote-types"
+import { calculateTotalCost, calculateEquipmentSummary, getSplitterType } from "@/lib/quote-types"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -200,10 +200,28 @@ export async function generateQuotePDF(
     pageCount: { n: 1 },
   }
 
-  const { summary, equipmentCost, agencyCount } = calculateTotalCost(agencies, prices)
-  const monthlyEquipmentFee = equipmentCost / paymentTerms
-  const monthlyMaintenanceFee = agencyCount * prices.MONTHLY_MAINTENANCE_PER_AGENCY
-  const grandTotalMonthly = monthlyEquipmentFee + monthlyMaintenanceFee
+  const { summary } = calculateTotalCost(agencies, prices)
+
+  // Calcular por separado: equipos+licencias+banco vs. mantenimiento
+  const equipmentAndCommissionTotal = agencies.reduce((total, agency) => {
+    const agencySummary = calculateEquipmentSummary([agency])
+    const agencyEquipmentCost =
+      agencySummary.mediaPlayers * prices.MEDIA_PLAYER +
+      agencySummary.splitters1x2 * prices.SPLITTER_1X2 +
+      agencySummary.splitters1x4 * prices.SPLITTER_1X4 +
+      agencySummary.splitters1x8 * prices.SPLITTER_1X8 +
+      agencySummary.hdmiCables * prices.HDMI_CABLE +
+      agencySummary.mediaPlayers * prices.MEDIA_PLAYER_LICENSE
+    const agencySubtotal = agencyEquipmentCost + prices.MONTHLY_MAINTENANCE_PER_AGENCY
+    const agencyBankingCommission =
+      (agencySubtotal * prices.BANKING_COMMISSION_RATE * paymentTerms) / 100
+    return total + agencyEquipmentCost + agencyBankingCommission
+  }, 0)
+
+  const maintenanceTotal = agencies.length * prices.MONTHLY_MAINTENANCE_PER_AGENCY
+  const grandTotalMonthly = (equipmentAndCommissionTotal + maintenanceTotal) / paymentTerms
+  const monthlyEquipmentAndCommission = equipmentAndCommissionTotal / paymentTerms
+  const monthlyMaintenance = maintenanceTotal
 
   // ── HEADER PÁGINA 1 ───────────────────────────────────────────────────────
   doc.setFillColor(37, 99, 235)
@@ -294,7 +312,7 @@ export async function generateQuotePDF(
   // ── DETALLE DE EQUIPOS ────────────────────────────────────────────────────
   y = drawSectionTitle(ctx, y, "DETALLE DE EQUIPOS")
 
-  // Encabezado tabla
+  // Encabezado tabla — solo EQUIPO y CANT.
   y = ensureSpace(ctx, y, 16)
   doc.setFillColor(241, 245, 249)
   doc.rect(margin, y, ctx.contentW, 7, "F")
@@ -302,22 +320,20 @@ export async function generateQuotePDF(
   doc.setFont("helvetica", "bold")
   doc.setTextColor(71, 85, 105)
   doc.text("EQUIPO", margin + 2, y + 5)
-  doc.text("CANT.", margin + 80, y + 5, { align: "right" })
-  doc.text("PRECIO UNIT.", margin + 120, y + 5, { align: "right" })
-  doc.text("SUBTOTAL", margin + ctx.contentW, y + 5, { align: "right" })
+  doc.text("Cantidad", margin + ctx.contentW - 15, y + 5, { align: "center" })
   y += 9
 
-  const equipRows: { label: string; qty: number; unit: number }[] = []
+  const equipRows: { label: string; qty: number }[] = []
   if (summary.mediaPlayers > 0)
-    equipRows.push({ label: "Media Player", qty: summary.mediaPlayers, unit: prices.MEDIA_PLAYER })
+    equipRows.push({ label: "Media Player", qty: summary.mediaPlayers })
   if (summary.splitters1x2 > 0)
-    equipRows.push({ label: "Splitter 1×2", qty: summary.splitters1x2, unit: prices.SPLITTER_1X2 })
+    equipRows.push({ label: "Splitter 1×2", qty: summary.splitters1x2 })
   if (summary.splitters1x4 > 0)
-    equipRows.push({ label: "Splitter 1×4", qty: summary.splitters1x4, unit: prices.SPLITTER_1X4 })
+    equipRows.push({ label: "Splitter 1×4", qty: summary.splitters1x4 })
   if (summary.splitters1x8 > 0)
-    equipRows.push({ label: "Splitter 1×8", qty: summary.splitters1x8, unit: prices.SPLITTER_1X8 })
+    equipRows.push({ label: "Splitter 1×8", qty: summary.splitters1x8 })
   if (summary.hdmiCables > 0)
-    equipRows.push({ label: "Cable HDMI", qty: summary.hdmiCables, unit: prices.HDMI_CABLE })
+    equipRows.push({ label: "Cable HDMI", qty: summary.hdmiCables })
 
   equipRows.forEach((row, i) => {
     y = ensureSpace(ctx, y, 8)
@@ -329,37 +345,23 @@ export async function generateQuotePDF(
     doc.setFontSize(8)
     doc.setTextColor(30, 41, 59)
     doc.text(row.label, margin + 2, y + 4)
-    doc.text(String(row.qty), margin + 80, y + 4, { align: "right" })
-    doc.text(formatCurrency(row.unit), margin + 120, y + 4, { align: "right" })
-    doc.text(formatCurrency(row.qty * row.unit), margin + ctx.contentW, y + 4, { align: "right" })
+    doc.text(String(row.qty), margin + ctx.contentW - 15, y + 4, { align: "center" })
     y += 7
   })
 
-  // Total equipos
-  y = ensureSpace(ctx, y, 16)
-  y += 2
-  doc.setDrawColor(37, 99, 235)
-  doc.setLineWidth(0.5)
-  doc.line(margin, y, pageW - margin, y)
-  y += 5
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(10)
-  doc.setTextColor(30, 41, 59)
-  doc.text("Costo Total de Equipos", margin + 2, y)
-  doc.text(formatCurrency(equipmentCost), margin + ctx.contentW, y, { align: "right" })
-  y += 10
+  y += 6
 
-  // ── PLAN DE FINANCIAMIENTO ────────────────────────────────────────────────
-  y = drawSectionTitle(ctx, y, "PLAN DE FINANCIAMIENTO")
+  // ── CUOTA MENSUAL ─────────────────────────────────────────────────────────
+  y = drawSectionTitle(ctx, y, "CUOTA MENSUAL")
 
   y = ensureSpace(ctx, y, 8)
   doc.setFontSize(9)
   doc.setFont("helvetica", "normal")
   doc.setTextColor(71, 85, 105)
   doc.text(`Plazo seleccionado: ${paymentTerms} meses`, margin, y)
-  y += 8
+  y += 10
 
-  // Fila pago equipos
+  // Fila pago equipos + comisión
   y = ensureSpace(ctx, y, 10)
   doc.setFillColor(241, 245, 249)
   doc.rect(margin, y - 2, ctx.contentW, 8, "F")
@@ -368,7 +370,7 @@ export async function generateQuotePDF(
   doc.setTextColor(30, 41, 59)
   doc.text("Pago Mensual de Equipos", margin + 2, y + 4)
   doc.setFont("helvetica", "bold")
-  doc.text(formatCurrency(monthlyEquipmentFee), margin + ctx.contentW, y + 4, { align: "right" })
+  doc.text(formatCurrency(monthlyEquipmentAndCommission), margin + ctx.contentW, y + 4, { align: "right" })
   y += 10
 
   // Fila mantenimiento
@@ -376,12 +378,12 @@ export async function generateQuotePDF(
   doc.setFont("helvetica", "normal")
   doc.setTextColor(30, 41, 59)
   doc.text(
-    `Pago Mensual de Mantenimiento (${agencyCount} agencia${agencyCount > 1 ? "s" : ""} × ${formatCurrency(prices.MONTHLY_MAINTENANCE_PER_AGENCY)})`,
+    `Pago Mensual de Mantenimiento (${agencies.length} agencia${agencies.length > 1 ? "s" : ""} × ${formatCurrency(prices.MONTHLY_MAINTENANCE_PER_AGENCY)})`,
     margin + 2,
     y + 4
   )
   doc.setFont("helvetica", "bold")
-  doc.text(formatCurrency(monthlyMaintenanceFee), margin + ctx.contentW, y + 4, { align: "right" })
+  doc.text(formatCurrency(monthlyMaintenance), margin + ctx.contentW, y + 4, { align: "right" })
   y += 12
 
   // Caja total mensual — necesita 26mm
